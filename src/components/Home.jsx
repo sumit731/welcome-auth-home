@@ -1,14 +1,24 @@
 import { useNavigate } from "react-router-dom";
-import { Fragment, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { FaCamera } from "react-icons/fa"; // Import camera icon
 
 const Home = () => {
     const navigate = useNavigate();
     const [showLogout, setShowLogout] = useState(false);
+    const [user, setUser] = useState(null);
+    const [profileImage, setProfileImage] = useState(null);
 
     useEffect(() => {
         const isAuthenticated = sessionStorage.getItem("isAuthenticated");
         if (!isAuthenticated) {
             navigate("/signin");
+        }
+
+        // Fetch user data
+        const storedUser = JSON.parse(localStorage.getItem("user"));
+        if (storedUser) {
+            setUser(storedUser);
+            setProfileImage(localStorage.getItem("profileImage")); // Load saved profile image
         }
     }, [navigate]);
 
@@ -17,27 +27,29 @@ const Home = () => {
         navigate("/signin");
     };
 
-    const [user, setUser] = useState(null);
-
-    useEffect(() => {
-        const storedUser = JSON.parse(localStorage.getItem("user"));
-        if (storedUser) {
-            setUser(storedUser);
+    // Handle Profile Picture Upload
+    const handleImageUpload = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setProfileImage(reader.result);
+                localStorage.setItem("profileImage", reader.result); // Save in LocalStorage
+            };
+            reader.readAsDataURL(file);
         }
-    }, []);
+    };
 
     return (
         <div className="min-h-screen flex flex-col bg-gray-100 border border-gray-300">
 
+            {/* Account Settings Section */}
             <div
-                className="w-full bg-white flex flex-col cursor-pointer"
+                className="w-full bg-white flex flex-col cursor-pointer relative"
                 onMouseEnter={() => setShowLogout(true)}
                 onMouseLeave={() => setShowLogout(false)}
             >
-                {/* Account Settings Button */}
                 <div className="p-4">Account Settings</div>
-
-                {/* Logout Button */}
                 {showLogout && (
                     <button
                         onClick={handleLogout}
@@ -48,14 +60,37 @@ const Home = () => {
                 )}
             </div>
 
-
+            {/* Profile Card */}
             <div className="w-full max-w-md p-6 border border-gray-300 rounded-lg">
                 {user ? (
                     <div>
-                        <div className="flex items-center">
-                            <div className="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center text-2xl font-bold text-white">
-                                {user.email.charAt(0).toUpperCase()}
+                        <div className="flex items-center relative">
+                            {/* Profile Image Container */}
+                            <div className="relative w-24 h-24">
+                                {profileImage ? (
+                                    <img
+                                        src={profileImage}
+                                        alt="Profile"
+                                        className="w-24 h-24 rounded-full border border-gray-400"
+                                    />
+                                ) : (
+                                    <div className="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center text-2xl font-bold text-white">
+                                        {user.email.charAt(0).toUpperCase()}
+                                    </div>
+                                )}
+
+                                {/* Image Upload Button */}
+                                <label className="absolute bottom-0 right-0 bg-gray-200 p-2 rounded-full cursor-pointer">
+                                    <FaCamera className="text-gray-600" />
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={handleImageUpload}
+                                    />
+                                </label>
                             </div>
+
                             <div className="ml-4">
                                 <p className="">{user.name}</p>
                                 <h2 className="text-xl font-semibold text-gray-900">{user.email}</h2>
@@ -64,7 +99,7 @@ const Home = () => {
 
                         <div className="mt-4">
                             <p className="text-gray-700 text-sm">
-                                Lorem, ipsum dolor sit amet consectetur adipisicing elit. Facere animi doloremque libero ut voluptatem maiores iusto aperiam, nobis rerum nihil.
+                                Welcome to your profile! You can upload a profile picture by clicking the camera icon.
                             </p>
                         </div>
                     </div>
